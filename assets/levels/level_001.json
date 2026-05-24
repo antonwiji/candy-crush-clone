@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "name": "Sugar Sunrise",
+  "rows": 8,
+  "cols": 8,
+  "moves": 20,
+  "tileTypes": ["red", "blue", "green", "yellow", "purple", "orange"],
+  "objective": {
+    "type": "score",
+    "targetScore": 1000
+  }
+}
