@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../core/audio/audio_manager.dart';
 import '../game/sweet_match_game.dart';
 import '../overlays/game_over_overlay.dart';
 import '../overlays/hud_overlay.dart';
@@ -17,6 +20,12 @@ class SweetMatchApp extends StatefulWidget {
 
 class _SweetMatchAppState extends State<SweetMatchApp> {
   late final SweetMatchGame game = SweetMatchGame();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(AudioManager.playGlobalBgm());
+  }
 
   @override
   Widget build(BuildContext context) {
