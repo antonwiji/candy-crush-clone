@@ -43,15 +43,15 @@ class HudOverlay extends StatelessWidget {
                   ),
                   Positioned(
                     left: 22,
-                    top: 78,
+                    top: 70,
                     right: 22,
-                    child: _ScoreArea(snapshot: snapshot),
+                    child: _ObjectiveRow(snapshot: snapshot),
                   ),
                   Positioned(
                     left: 22,
                     right: 22,
-                    top: 210,
-                    child: _ProgressSection(snapshot: snapshot),
+                    top: 160,
+                    child: _CurrentScoreCard(snapshot: snapshot),
                   ),
                   Positioned(
                     left: 40,
@@ -86,51 +86,7 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xffff8ebc), _primary],
-            ),
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x32a33467),
-                  blurRadius: 12,
-                  offset: Offset(0, 5)),
-            ],
-          ),
-          child: const Icon(Icons.auto_awesome_rounded,
-              color: Colors.white, size: 23),
-        ),
-        const SizedBox(width: 9),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'LEVEL',
-              style: TextStyle(
-                color: Color(0xffa89198),
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.4,
-              ),
-            ),
-            Text(
-              '$levelNumber',
-              style: const TextStyle(
-                color: _primary,
-                height: 1,
-                fontSize: 21,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+        _LevelBadge(levelNumber: levelNumber),
         const Spacer(),
         const Text(
           'Sweet Match',
@@ -168,6 +124,59 @@ class _TopBar extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LevelBadge extends StatelessWidget {
+  const _LevelBadge({required this.levelNumber});
+
+  final int levelNumber;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xfffff2f8), Colors.white],
+        ),
+        borderRadius: BorderRadius.circular(19),
+        border: Border.all(color: const Color(0xfff1d0df)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14a33467),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'LEVEL',
+            style: TextStyle(
+              color: Color(0xffa89198),
+              fontSize: 8,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.25,
+            ),
+          ),
+          Text(
+            '$levelNumber',
+            style: const TextStyle(
+              color: _primary,
+              height: .95,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -284,192 +293,334 @@ class _CoinBadgeState extends State<_CoinBadge>
   }
 }
 
-class _ScoreArea extends StatelessWidget {
-  const _ScoreArea({required this.snapshot});
+class _ObjectiveRow extends StatelessWidget {
+  const _ObjectiveRow({required this.snapshot});
 
   final GameSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
-          'TARGET SCORE',
-          style: TextStyle(
-            color: _outline,
-            fontSize: 11,
-            letterSpacing: 2,
-            fontWeight: FontWeight.w700,
-          ),
+        Expanded(
+          child: _TargetScoreCard(targetScore: snapshot.targetScore),
         ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 166,
-              height: 62,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(27),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Color(0x17000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 8)),
-                  BoxShadow(color: Color(0xffe8e9eb), offset: Offset(0, 4)),
-                ],
-              ),
-              child: Text(
-                _format(snapshot.targetScore),
-                style: const TextStyle(
-                  color: _primary,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.7,
-                ),
-              ),
-            ),
-            Container(
-              width: 84,
-              height: 84,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xffb77bff), _secondary],
-                ),
-                border: Border.all(color: Colors.white, width: 4),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Color(0x377644b5),
-                      blurRadius: 18,
-                      offset: Offset(0, 8)),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'MOVES',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    '${snapshot.moves}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 29,
-                      fontWeight: FontWeight.w500,
-                      height: 1.05,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        const SizedBox(width: 12),
+        _MovesBadge(moves: snapshot.moves),
       ],
     );
   }
 }
 
-class _ProgressSection extends StatelessWidget {
-  const _ProgressSection({required this.snapshot});
+class _TargetScoreCard extends StatelessWidget {
+  const _TargetScoreCard({required this.targetScore});
+
+  final int targetScore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xfffff4f9), Colors.white],
+        ),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: const Color(0xfff1d5e2)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x16a33467),
+            blurRadius: 15,
+            offset: Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 37,
+            width: 37,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xffff8fbc), _primary],
+              ),
+            ),
+            child:
+                const Icon(Icons.flag_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'TARGET SCORE',
+                style: TextStyle(
+                  color: _outline,
+                  fontSize: 9,
+                  letterSpacing: 1.35,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '${_format(targetScore)} pts',
+                style: const TextStyle(
+                  color: _primary,
+                  fontSize: 22,
+                  height: 1.15,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -.35,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MovesBadge extends StatelessWidget {
+  const _MovesBadge({required this.moves});
+
+  final int moves;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 78,
+      height: 78,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xffb77bff), _secondary],
+        ),
+        border: Border.all(color: Colors.white, width: 4),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x377644b5), blurRadius: 18, offset: Offset(0, 8)),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'MOVES',
+            style: TextStyle(
+                color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+          ),
+          Text(
+            '$moves',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 27,
+              fontWeight: FontWeight.w500,
+              height: 1.05,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CurrentScoreCard extends StatefulWidget {
+  const _CurrentScoreCard({required this.snapshot});
 
   final GameSnapshot snapshot;
 
   @override
+  State<_CurrentScoreCard> createState() => _CurrentScoreCardState();
+}
+
+class _CurrentScoreCardState extends State<_CurrentScoreCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _bounceController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 430),
+  );
+  late int _scoreFrom = widget.snapshot.score;
+  int _gain = 0;
+  bool _showGain = false;
+
+  @override
+  void didUpdateWidget(covariant _CurrentScoreCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.snapshot.score > oldWidget.snapshot.score) {
+      _scoreFrom = oldWidget.snapshot.score;
+      _gain = widget.snapshot.score - oldWidget.snapshot.score;
+      _showGain = true;
+      _bounceController.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'CURRENT: ${_format(snapshot.score)}',
-              style: const TextStyle(
-                color: _tertiary,
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-                letterSpacing: .45,
+    final progress = widget.snapshot.progress;
+    final emphasized = progress >= .8;
+    final success = progress >= 1;
+    final accent = success
+        ? const Color(0xff40af7a)
+        : emphasized
+            ? const Color(0xffed4f91)
+            : _primary;
+    return AnimatedBuilder(
+      animation: _bounceController,
+      builder: (context, _) {
+        final effectProgress =
+            Curves.easeOut.transform(_bounceController.value);
+        final scale = TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1, end: 1.025), weight: 36),
+          TweenSequenceItem(tween: Tween(begin: 1.025, end: 1), weight: 64),
+        ]).transform(_bounceController.value);
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(13, 9, 13, 10),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.white, Color(0xfffff3f8)],
               ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xfff1d5e2)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x15a33467),
+                  blurRadius: 15,
+                  offset: Offset(0, 7),
+                ),
+              ],
             ),
-            Row(
-              children: List.generate(3, (index) {
-                final active = snapshot.progress >= (index + 1) / 3;
-                return Icon(
-                  Icons.star_rounded,
-                  size: 22,
-                  color: active
-                      ? const Color(0xffe59b13)
-                      : const Color(0xffdee0e4),
-                );
-              }),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Container(
-          height: 26,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x16000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 5)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return Stack(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Positioned.fill(
-                      child: ColoredBox(color: Color(0xfff1f2f4)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.auto_awesome_rounded,
+                                color: _primary, size: 15),
+                            SizedBox(width: 5),
+                            Text(
+                              'CURRENT SCORE',
+                              style: TextStyle(
+                                color: _outline,
+                                fontSize: 9,
+                                letterSpacing: 1.35,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: List.generate(3, (index) {
+                            final active = progress >= (index + 1) / 3;
+                            return Icon(
+                              Icons.star_rounded,
+                              size: 17,
+                              color: active
+                                  ? const Color(0xffe59b13)
+                                  : const Color(0xffdee0e4),
+                            );
+                          }),
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: constraints.maxWidth * snapshot.progress,
-                      child: DecoratedBox(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0xffff86b7), _primary],
-                          ),
+                    const SizedBox(height: 3),
+                    TweenAnimationBuilder<int>(
+                      tween: IntTween(
+                        begin: _scoreFrom,
+                        end: widget.snapshot.score,
+                      ),
+                      duration: const Duration(milliseconds: 380),
+                      curve: Curves.easeOutCubic,
+                      onEnd: () => _scoreFrom = widget.snapshot.score,
+                      builder: (context, value, _) => Text(
+                        '${_format(value)} pts',
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 26,
+                          height: 1.05,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -.35,
                         ),
                       ),
                     ),
+                    const SizedBox(height: 7),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(end: progress),
+                        duration: const Duration(milliseconds: 450),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) {
+                          return LinearProgressIndicator(
+                            value: value,
+                            minHeight: 10,
+                            backgroundColor: const Color(0xfff0f0f3),
+                            valueColor: AlwaysStoppedAnimation<Color>(accent),
+                          );
+                        },
+                      ),
+                    ),
+                    if (widget.snapshot.message.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          widget.snapshot.message,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                   ],
-                );
-              },
+                ),
+                if (_showGain && _bounceController.value < 1)
+                  Positioned(
+                    right: 66,
+                    top: 28 - effectProgress * 15,
+                    child: Opacity(
+                      opacity: 1 - effectProgress,
+                      child: Text(
+                        '+$_gain',
+                        style: const TextStyle(
+                          color: _primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-        ),
-        if (snapshot.message.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Text(
-              snapshot.message,
-              style: const TextStyle(
-                  color: _primary, fontSize: 11, fontWeight: FontWeight.w700),
-            ),
-          ),
-      ],
+        );
+      },
     );
   }
 }
