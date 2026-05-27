@@ -21,3 +21,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/levels/
+  fonts:
+    - family: Quicksand
+      fonts:
+        - asset: assets/fonts/Quicksand-VariableFont_wght.ttf
