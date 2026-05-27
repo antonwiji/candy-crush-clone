@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../core/storage/local_storage_service.dart';
+import '../features/economy/data/coin_repository.dart';
+import '../features/economy/domain/coin_service.dart';
+import '../features/economy/domain/game_reward_config.dart';
 import 'board/board_component.dart';
 import 'board/board_controller.dart';
 import 'board/board_position.dart';
@@ -28,6 +32,9 @@ class SweetMatchGame extends FlameGame {
   LevelConfig? _level;
   BoardController? controller;
   BoardComponent? boardComponent;
+  CoinService? _coinService;
+  int _coinTotal = 0;
+  int _coinRewardSequence = 0;
 
   @override
   Color backgroundColor() => const Color(0xfffffcfd);
@@ -37,6 +44,8 @@ class SweetMatchGame extends FlameGame {
       return;
     }
     state = GameState.loading;
+    await _loadCoinService();
+    _coinService!.resetLevelSession();
     _level ??= await _levelLoader.load(GameConfig.firstLevelAsset);
     controller = BoardController(_level!);
     boardComponent?.removeFromParent();
@@ -99,6 +108,10 @@ class SweetMatchGame extends FlameGame {
     );
     if (controller!.isWon) {
       state = GameState.levelComplete;
+      final rewarded = await _rewardLevelCompleted();
+      if (rewarded) {
+        await Future<void>.delayed(const Duration(milliseconds: 700));
+      }
       overlays.add(levelCompleteOverlay);
     } else if (controller!.isGameOver) {
       state = GameState.gameOver;
@@ -154,8 +167,28 @@ class SweetMatchGame extends FlameGame {
       targetScore: objective is ScoreObjective ? objective.targetScore : 0,
       levelNumber: _level!.id,
       levelName: _level!.name,
+      coinTotal: _coinTotal,
+      coinRewardSequence: _coinRewardSequence,
       message: message,
     );
+  }
+
+  Future<void> _loadCoinService() async {
+    _coinService ??= CoinService(
+      CoinRepository(await LocalStorageService.create()),
+    );
+    _coinTotal = _coinService!.currentCoin;
+  }
+
+  Future<bool> _rewardLevelCompleted() async {
+    final updatedCoin = await _coinService!.rewardLevelCompleted();
+    if (updatedCoin == null) {
+      return false;
+    }
+    _coinTotal = updatedCoin;
+    _coinRewardSequence++;
+    _updateStats(message: '+${GameRewardConfig.winCoinReward} COINS!');
+    return true;
   }
 
   @override

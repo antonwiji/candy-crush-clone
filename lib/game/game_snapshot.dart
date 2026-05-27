@@ -6,6 +6,8 @@ class GameSnapshot {
     required this.targetScore,
     required this.levelNumber,
     required this.levelName,
+    required this.coinTotal,
+    required this.coinRewardSequence,
     this.message = '',
   });
 
@@ -16,6 +18,8 @@ class GameSnapshot {
         targetScore = 0,
         levelNumber = 1,
         levelName = 'Sugar Sunrise',
+        coinTotal = 0,
+        coinRewardSequence = 0,
         message = '';
 
   final int score;
@@ -24,6 +28,8 @@ class GameSnapshot {
   final int targetScore;
   final int levelNumber;
   final String levelName;
+  final int coinTotal;
+  final int coinRewardSequence;
   final String message;
 
   double get progress {
