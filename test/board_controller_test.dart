@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sweet_match_game/game/board/board_controller.dart';
+import 'package:sweet_match_game/game/board/board_interaction_state.dart';
 import 'package:sweet_match_game/game/board/board_model.dart';
 import 'package:sweet_match_game/game/board/board_position.dart';
 import 'package:sweet_match_game/game/level/level_config.dart';
@@ -94,6 +95,74 @@ void main() {
     });
   });
 
+  group('animated interaction stages', () {
+    test('invalid swap locks input, restores board, and keeps the move', () {
+      final controller = _controllerFor([
+        [TileType.red, TileType.blue, TileType.green, TileType.yellow],
+        [TileType.blue, TileType.green, TileType.yellow, TileType.purple],
+        [TileType.green, TileType.yellow, TileType.purple, TileType.orange],
+        [TileType.yellow, TileType.purple, TileType.orange, TileType.red],
+      ]);
+      final firstId = controller.board.tileAt(0, 0)!.id;
+      final secondId = controller.board.tileAt(0, 1)!.id;
+
+      expect(
+        controller.beginSwap(
+          const BoardPosition(row: 0, col: 0),
+          const BoardPosition(row: 0, col: 1),
+        ),
+        isTrue,
+      );
+      expect(controller.interactionState, BoardInteractionState.swapping);
+      expect(controller.canAcceptInput, isFalse);
+      expect(
+        controller.beginSwap(
+          const BoardPosition(row: 1, col: 0),
+          const BoardPosition(row: 1, col: 1),
+        ),
+        isFalse,
+      );
+      expect(controller.findMatches(), isEmpty);
+
+      controller.revertSwap(
+        const BoardPosition(row: 0, col: 0),
+        const BoardPosition(row: 0, col: 1),
+      );
+      expect(controller.interactionState, BoardInteractionState.revertingSwap);
+      expect(controller.board.tileAt(0, 0)!.id, firstId);
+      expect(controller.board.tileAt(0, 1)!.id, secondId);
+      expect(controller.movesRemaining, 20);
+
+      controller.finishInteraction();
+      expect(controller.canAcceptInput, isTrue);
+    });
+
+    test('a staged clear commits one move and one score award', () {
+      final controller = _controllerFor([
+        [TileType.red, TileType.green, TileType.red, TileType.blue],
+        [TileType.blue, TileType.red, TileType.green, TileType.yellow],
+        [TileType.green, TileType.blue, TileType.yellow, TileType.orange],
+        [TileType.orange, TileType.purple, TileType.blue, TileType.green],
+      ]);
+
+      controller.beginSwap(
+        const BoardPosition(row: 0, col: 1),
+        const BoardPosition(row: 1, col: 1),
+      );
+      final matches = controller.findMatches();
+      controller.commitValidSwap();
+      final gained = controller.clearMatches(matches, 1);
+
+      expect(matches, isNotEmpty);
+      expect(gained, 30);
+      expect(controller.score, 30);
+      expect(controller.movesRemaining, 19);
+
+      controller.finishInteraction();
+      expect(controller.canAcceptInput, isTrue);
+    });
+  });
+
   test('gravity pulls surviving tiles into empty positions', () {
     final controller = _controllerFor([
       [TileType.red, TileType.blue, TileType.green, TileType.yellow],
@@ -137,7 +206,8 @@ void main() {
     expect(completed.isWon, isTrue);
   });
 
-  test('using the final valid move without reaching the target is game over', () {
+  test('using the final valid move without reaching the target is game over',
+      () {
     final controller = _controllerFor(
       [
         [TileType.red, TileType.green, TileType.red, TileType.blue],

@@ -3,6 +3,7 @@ import 'dart:math';
 import '../level/level_config.dart';
 import '../tile/tile_model.dart';
 import '../tile/tile_type.dart';
+import 'board_interaction_state.dart';
 import 'board_model.dart';
 import 'board_position.dart';
 import 'match_result.dart';
@@ -24,58 +25,108 @@ class BoardController {
   int score = 0;
   late int movesRemaining;
   final Map<TileType, int> collected = {};
+  BoardInteractionState interactionState = BoardInteractionState.idle;
   int _nextId = 0;
 
-  bool get isWon => level.objective.isComplete(score: score, collected: collected);
+  bool get isWon =>
+      level.objective.isComplete(score: score, collected: collected);
   bool get isGameOver => movesRemaining <= 0 && !isWon;
+  bool get canAcceptInput => interactionState == BoardInteractionState.idle;
 
   void reset() {
     score = 0;
     movesRemaining = level.moves;
     collected.clear();
+    interactionState = BoardInteractionState.idle;
     board = _generatePlayableBoard();
   }
 
-  SwapResult trySwap(BoardPosition first, BoardPosition second) {
-    if (!_isInside(first) ||
+  bool beginSwap(BoardPosition first, BoardPosition second) {
+    if (!canAcceptInput ||
+        !_isInside(first) ||
         !_isInside(second) ||
         !first.isAdjacentTo(second) ||
         movesRemaining <= 0 ||
         isWon) {
+      return false;
+    }
+
+    interactionState = BoardInteractionState.swapping;
+    _swap(first, second);
+    return true;
+  }
+
+  void commitValidSwap() {
+    movesRemaining--;
+  }
+
+  void revertSwap(BoardPosition first, BoardPosition second) {
+    interactionState = BoardInteractionState.revertingSwap;
+    _swap(first, second);
+  }
+
+  List<TileModel> uniqueMatchedTiles(List<MatchResult> matches) {
+    return <String, TileModel>{
+      for (final match in matches)
+        for (final tile in match.tiles) tile.id: tile,
+    }.values.toList();
+  }
+
+  int clearMatches(List<MatchResult> matches, int cascade) {
+    final matchedTiles = uniqueMatchedTiles(matches);
+    final gainedScore = matchedTiles.length * 10 * cascade;
+    score += gainedScore;
+    for (final tile in matchedTiles) {
+      collected.update(tile.type, (value) => value + 1, ifAbsent: () => 1);
+      board.put(tile.row, tile.col, null);
+    }
+    return gainedScore;
+  }
+
+  bool ensurePlayableBoard() {
+    if (!isWon && movesRemaining > 0 && !hasPossibleMove()) {
+      board = _generatePlayableBoard();
+      return true;
+    }
+    return false;
+  }
+
+  void setInteractionState(BoardInteractionState state) {
+    interactionState = state;
+  }
+
+  void finishInteraction() {
+    interactionState = BoardInteractionState.idle;
+  }
+
+  SwapResult trySwap(BoardPosition first, BoardPosition second) {
+    if (!beginSwap(first, second)) {
       return const SwapResult.invalid();
     }
 
-    _swap(first, second);
     var matches = findMatches();
     if (matches.isEmpty) {
-      _swap(first, second);
+      revertSwap(first, second);
+      finishInteraction();
       return const SwapResult.invalid();
     }
 
-    movesRemaining--;
+    commitValidSwap();
     final scoreBefore = score;
     var cascade = 0;
     var clearedCount = 0;
     while (matches.isNotEmpty) {
       cascade++;
-      final matchedTiles = <String, TileModel>{
-        for (final match in matches)
-          for (final tile in match.tiles) tile.id: tile,
-      }.values.toList();
+      final matchedTiles = uniqueMatchedTiles(matches);
       clearedCount += matchedTiles.length;
-      score += matchedTiles.length * 10 * cascade;
-      for (final tile in matchedTiles) {
-        collected.update(tile.type, (value) => value + 1, ifAbsent: () => 1);
-        board.put(tile.row, tile.col, null);
-      }
+      clearMatches(matches, cascade);
       applyGravity();
       refill();
       matches = findMatches();
     }
 
-    if (!isWon && movesRemaining > 0 && !hasPossibleMove()) {
-      board = _generatePlayableBoard();
-    }
+    ensurePlayableBoard();
+    finishInteraction();
 
     return SwapResult(
       isValid: true,

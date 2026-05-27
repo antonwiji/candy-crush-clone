@@ -11,6 +11,7 @@ import 'game_snapshot.dart';
 import 'game_state.dart';
 import 'level/level_config.dart';
 import 'level/level_loader.dart';
+import 'level/level_objective.dart';
 
 class SweetMatchGame extends FlameGame {
   static const String mainMenuOverlay = 'MainMenu';
@@ -29,9 +30,12 @@ class SweetMatchGame extends FlameGame {
   BoardComponent? boardComponent;
 
   @override
-  Color backgroundColor() => const Color(0xffffd9e7);
+  Color backgroundColor() => const Color(0xfffffcfd);
 
   Future<void> startGame() async {
+    if (state == GameState.loading) {
+      return;
+    }
     state = GameState.loading;
     _level ??= await _levelLoader.load(GameConfig.firstLevelAsset);
     controller = BoardController(_level!);
@@ -39,6 +43,8 @@ class SweetMatchGame extends FlameGame {
     boardComponent = BoardComponent(
       controller: controller!,
       onTilePressed: _onTilePressed,
+      onSwipe: _onSwipe,
+      onBoardChanged: _updateStats,
     );
     await camera.viewport.add(boardComponent!);
     overlays
@@ -73,9 +79,17 @@ class SweetMatchGame extends FlameGame {
     unawaited(_performSwap(current, position));
   }
 
+  void _onSwipe(BoardPosition first, BoardPosition second) {
+    if (state != GameState.playing) {
+      return;
+    }
+    boardComponent!.selected = null;
+    unawaited(_performSwap(first, second));
+  }
+
   Future<void> _performSwap(BoardPosition first, BoardPosition second) async {
     state = GameState.animating;
-    final result = controller!.trySwap(first, second);
+    final result = await boardComponent!.animateSwap(first, second);
     _updateStats(
       message: result.isValid
           ? result.cascadeCount > 1
@@ -83,7 +97,6 @@ class SweetMatchGame extends FlameGame {
               : '+${result.scoreGained}'
           : 'Swap tidak menghasilkan match',
     );
-    await Future<void>.delayed(const Duration(milliseconds: 230));
     if (controller!.isWon) {
       state = GameState.levelComplete;
       overlays.add(levelCompleteOverlay);
@@ -133,10 +146,13 @@ class SweetMatchGame extends FlameGame {
 
   void _updateStats({String message = ''}) {
     final game = controller!;
+    final objective = _level!.objective;
     stats.value = GameSnapshot(
       score: game.score,
       moves: game.movesRemaining,
-      target: _level!.objective.label(score: game.score, collected: game.collected),
+      target: objective.label(score: game.score, collected: game.collected),
+      targetScore: objective is ScoreObjective ? objective.targetScore : 0,
+      levelNumber: _level!.id,
       levelName: _level!.name,
       message: message,
     );

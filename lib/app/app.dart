@@ -28,18 +28,20 @@ class _SweetMatchAppState extends State<SweetMatchApp> {
           seedColor: const Color(0xffef5795),
           brightness: Brightness.light,
         ),
-        fontFamily: 'sans',
+        fontFamily: 'Quicksand',
       ),
       home: Scaffold(
         body: GameWidget<SweetMatchGame>(
           game: game,
           overlayBuilderMap: {
-            SweetMatchGame.mainMenuOverlay: (_, game) => MainMenuOverlay(game: game),
+            SweetMatchGame.mainMenuOverlay: (_, game) =>
+                MainMenuOverlay(game: game),
             SweetMatchGame.hudOverlay: (_, game) => HudOverlay(game: game),
             SweetMatchGame.pauseOverlay: (_, game) => PauseOverlay(game: game),
             SweetMatchGame.levelCompleteOverlay: (_, game) =>
                 LevelCompleteOverlay(game: game),
-            SweetMatchGame.gameOverOverlay: (_, game) => GameOverOverlay(game: game),
+            SweetMatchGame.gameOverOverlay: (_, game) =>
+                GameOverOverlay(game: game),
           },
           initialActiveOverlays: const [SweetMatchGame.mainMenuOverlay],
         ),
