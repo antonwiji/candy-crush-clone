@@ -1,13 +1,18 @@
+import 'dart:async';
+
 import 'package:flame_audio/flame_audio.dart';
 
 class AudioManager {
   AudioManager._();
 
   static const String bgGame = 'bg_game.mp3';
+  static const String sfxSlide = 'slide.mp3';
   static const double defaultBgmVolume = 0.35;
+  static const double defaultSfxVolume = 0.75;
 
   static Future<void>? _initialization;
   static Future<void>? _startingBgm;
+  static DateTime? _lastSlideSfxPlayedAt;
   static bool _isBgmPlaying = false;
   static bool _isPausedByLifecycle = false;
   static bool _isAppActive = true;
@@ -19,7 +24,7 @@ class AudioManager {
   static Future<void> _initialize() async {
     FlameAudio.updatePrefix('assets/music/');
     await FlameAudio.bgm.initialize();
-    await FlameAudio.audioCache.load(bgGame);
+    await FlameAudio.audioCache.loadAll([bgGame, sfxSlide]);
   }
 
   static Future<void> playGlobalBgm() async {
@@ -63,6 +68,20 @@ class AudioManager {
 
     await FlameAudio.bgm.pause();
     _isPausedByLifecycle = true;
+  }
+
+  static Future<void> playSlideSfx() async {
+    await init();
+
+    final now = DateTime.now();
+    final lastPlayedAt = _lastSlideSfxPlayedAt;
+    if (lastPlayedAt != null &&
+        now.difference(lastPlayedAt).inMilliseconds < 100) {
+      return;
+    }
+
+    _lastSlideSfxPlayedAt = now;
+    unawaited(FlameAudio.play(sfxSlide, volume: defaultSfxVolume));
   }
 
   static Future<void> resumeBgmByLifecycle() async {
