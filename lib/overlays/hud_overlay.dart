@@ -36,6 +36,8 @@ class HudOverlay extends StatelessWidget {
                     right: 18,
                     child: _TopBar(
                       levelNumber: snapshot.levelNumber,
+                      coinTotal: snapshot.coinTotal,
+                      coinRewardSequence: snapshot.coinRewardSequence,
                       onPause: game.pauseGame,
                     ),
                   ),
@@ -68,9 +70,16 @@ class HudOverlay extends StatelessWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.levelNumber, required this.onPause});
+  const _TopBar({
+    required this.levelNumber,
+    required this.coinTotal,
+    required this.coinRewardSequence,
+    required this.onPause,
+  });
 
   final int levelNumber;
+  final int coinTotal;
+  final int coinRewardSequence;
   final VoidCallback onPause;
 
   @override
@@ -133,34 +142,9 @@ class _TopBar extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        Container(
-          height: 40,
-          padding: const EdgeInsets.fromLTRB(9, 0, 11, 0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x13000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 5)),
-            ],
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.monetization_on_rounded,
-                  color: Color(0xffe6a51d), size: 20),
-              SizedBox(width: 3),
-              Text(
-                '1,250',
-                style: TextStyle(
-                  color: Color(0xff3d3235),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
+        _CoinBadge(
+          coinTotal: coinTotal,
+          rewardSequence: coinRewardSequence,
         ),
         const SizedBox(width: 7),
         Container(
@@ -184,6 +168,118 @@ class _TopBar extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CoinBadge extends StatefulWidget {
+  const _CoinBadge({
+    required this.coinTotal,
+    required this.rewardSequence,
+  });
+
+  final int coinTotal;
+  final int rewardSequence;
+
+  @override
+  State<_CoinBadge> createState() => _CoinBadgeState();
+}
+
+class _CoinBadgeState extends State<_CoinBadge>
+    with SingleTickerProviderStateMixin {
+  bool _showReward = false;
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 680),
+  );
+
+  @override
+  void didUpdateWidget(covariant _CoinBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.rewardSequence > oldWidget.rewardSequence) {
+      _showReward = true;
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final progress = Curves.easeOut.transform(_controller.value);
+        final scale = TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1, end: 1.14), weight: 30),
+          TweenSequenceItem(tween: Tween(begin: 1.14, end: 1), weight: 70),
+        ]).transform(_controller.value);
+        return SizedBox(
+          width: 90,
+          height: 46,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.bottomCenter,
+            children: [
+              Transform.scale(
+                scale: scale,
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.fromLTRB(9, 0, 11, 0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Color(0x13000000),
+                          blurRadius: 12,
+                          offset: Offset(0, 5)),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.monetization_on_rounded,
+                          color: Color(0xffe6a51d), size: 20),
+                      const SizedBox(width: 3),
+                      Text(
+                        _format(widget.coinTotal),
+                        style: const TextStyle(
+                          color: Color(0xff3d3235),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_showReward && _controller.value < 1)
+                Positioned(
+                  top: -8 - 20 * progress,
+                  child: Opacity(
+                    opacity: 1 - progress,
+                    child: Transform.scale(
+                      scale: 1 + .18 * progress,
+                      child: const Text(
+                        '+5',
+                        style: TextStyle(
+                          color: Color(0xffe6a51d),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
