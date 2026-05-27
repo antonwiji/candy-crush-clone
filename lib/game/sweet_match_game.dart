@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../core/audio/audio_manager.dart';
 import '../core/storage/local_storage_service.dart';
 import '../features/economy/data/coin_repository.dart';
 import '../features/economy/domain/coin_service.dart';
@@ -98,6 +99,7 @@ class SweetMatchGame extends FlameGame {
 
   Future<void> _performSwap(BoardPosition first, BoardPosition second) async {
     state = GameState.animating;
+    unawaited(AudioManager.playSlideSfx());
     final result = await boardComponent!.animateSwap(first, second);
     _updateStats(
       message: result.isValid
