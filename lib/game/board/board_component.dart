@@ -21,12 +21,14 @@ class BoardComponent extends PositionComponent
     required this.onTilePressed,
     required this.onSwipe,
     required this.onBoardChanged,
+    required this.onMatchScored,
   });
 
   final BoardController controller;
   final void Function(BoardPosition position) onTilePressed;
   final void Function(BoardPosition first, BoardPosition second) onSwipe;
   final void Function() onBoardChanged;
+  final void Function(int cascade) onMatchScored;
   final TileAnimationService _animations = TileAnimationService();
   final Map<String, TileComponent> _tiles = {};
   double _tileSize = 0;
@@ -175,6 +177,7 @@ class BoardComponent extends PositionComponent
         final gained = controller.clearMatches(matches, cascade);
         scoreGained += gained;
         onBoardChanged();
+        onMatchScored(cascade);
         add(
           FloatingScoreComponent(
             label: cascade > 1 ? 'COMBO +$gained' : '+$gained',
