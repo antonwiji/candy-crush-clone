@@ -55,6 +55,7 @@ class SweetMatchGame extends FlameGame {
       onTilePressed: _onTilePressed,
       onSwipe: _onSwipe,
       onBoardChanged: _updateStats,
+      onMatchScored: _onMatchScored,
     );
     await camera.viewport.add(boardComponent!);
     overlays
@@ -121,6 +122,10 @@ class SweetMatchGame extends FlameGame {
     } else {
       state = GameState.playing;
     }
+  }
+
+  void _onMatchScored(int cascade) {
+    unawaited(AudioManager.playComboHitSfx(cascade));
   }
 
   void pauseGame() {

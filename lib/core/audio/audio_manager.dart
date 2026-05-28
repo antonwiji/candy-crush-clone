@@ -7,8 +7,12 @@ class AudioManager {
 
   static const String bgGame = 'bg_game.mp3';
   static const String sfxSlide = 'slide.mp3';
+  static const String combo1Hit = 'combo1_hit.mp3';
+  static const String combo2Hit = 'combo2_hit.mp3';
+  static const String combo3Hit = 'combo3_hit.mp3';
   static const double defaultBgmVolume = 0.35;
   static const double defaultSfxVolume = 0.75;
+  static const double defaultComboSfxVolume = 0.8;
 
   static Future<void>? _initialization;
   static Future<void>? _startingBgm;
@@ -24,7 +28,13 @@ class AudioManager {
   static Future<void> _initialize() async {
     FlameAudio.updatePrefix('assets/music/');
     await FlameAudio.bgm.initialize();
-    await FlameAudio.audioCache.loadAll([bgGame, sfxSlide]);
+    await FlameAudio.audioCache.loadAll([
+      bgGame,
+      sfxSlide,
+      combo1Hit,
+      combo2Hit,
+      combo3Hit,
+    ]);
   }
 
   static Future<void> playGlobalBgm() async {
@@ -82,6 +92,24 @@ class AudioManager {
 
     _lastSlideSfxPlayedAt = now;
     unawaited(FlameAudio.play(sfxSlide, volume: defaultSfxVolume));
+  }
+
+  static Future<void> playComboHitSfx(int comboCount) async {
+    if (comboCount <= 0) {
+      return;
+    }
+    await init();
+
+    final sfx = _comboHitSfxFor(comboCount);
+    unawaited(FlameAudio.play(sfx, volume: defaultComboSfxVolume));
+  }
+
+  static String _comboHitSfxFor(int comboCount) {
+    return switch ((comboCount - 1) % 3) {
+      0 => combo1Hit,
+      1 => combo2Hit,
+      _ => combo3Hit,
+    };
   }
 
   static Future<void> resumeBgmByLifecycle() async {
