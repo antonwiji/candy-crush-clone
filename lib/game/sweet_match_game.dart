@@ -36,6 +36,7 @@ class SweetMatchGame extends FlameGame {
   CoinService? _coinService;
   int _coinTotal = 0;
   int _coinRewardSequence = 0;
+  bool _isWinningTriggered = false;
 
   @override
   Color backgroundColor() => const Color(0xfffffcfd);
@@ -47,6 +48,7 @@ class SweetMatchGame extends FlameGame {
     state = GameState.loading;
     await _loadCoinService();
     _coinService!.resetLevelSession();
+    _isWinningTriggered = false;
     _level ??= await _levelLoader.load(GameConfig.firstLevelAsset);
     controller = BoardController(_level!);
     boardComponent?.removeFromParent();
@@ -109,7 +111,8 @@ class SweetMatchGame extends FlameGame {
               : '+${result.scoreGained}'
           : 'Swap tidak menghasilkan match',
     );
-    if (controller!.isWon) {
+    if (controller!.isWon && !_isWinningTriggered) {
+      _isWinningTriggered = true;
       state = GameState.levelComplete;
       final rewarded = await _rewardLevelCompleted();
       if (rewarded) {
