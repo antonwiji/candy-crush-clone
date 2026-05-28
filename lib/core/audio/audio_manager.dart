@@ -10,9 +10,11 @@ class AudioManager {
   static const String combo1Hit = 'combo1_hit.mp3';
   static const String combo2Hit = 'combo2_hit.mp3';
   static const String combo3Hit = 'combo3_hit.mp3';
+  static const String winLevel = 'win_level.mp3';
   static const double defaultBgmVolume = 0.35;
   static const double defaultSfxVolume = 0.75;
   static const double defaultComboSfxVolume = 0.8;
+  static const double defaultWinningSfxVolume = 0.85;
 
   static Future<void>? _initialization;
   static Future<void>? _startingBgm;
@@ -20,6 +22,7 @@ class AudioManager {
   static bool _isBgmPlaying = false;
   static bool _isPausedByLifecycle = false;
   static bool _isAppActive = true;
+  static bool _isWinningSfxPlaying = false;
 
   static Future<void> init() {
     return _initialization ??= _initialize();
@@ -34,6 +37,7 @@ class AudioManager {
       combo1Hit,
       combo2Hit,
       combo3Hit,
+      winLevel,
     ]);
   }
 
@@ -102,6 +106,48 @@ class AudioManager {
 
     final sfx = _comboHitSfxFor(comboCount);
     unawaited(FlameAudio.play(sfx, volume: defaultComboSfxVolume));
+  }
+
+  static Future<void> playWinningSfx() async {
+    await init();
+    if (_isWinningSfxPlaying) {
+      return;
+    }
+
+    _isWinningSfxPlaying = true;
+    unawaited(_playWinningSfxWithBgmPause());
+  }
+
+  static Future<void> _playWinningSfxWithBgmPause() async {
+    final startingBgm = _startingBgm;
+    if (startingBgm != null) {
+      await startingBgm;
+    }
+
+    final shouldResumeBgm =
+        _isBgmPlaying && !_isPausedByLifecycle && _isAppActive;
+    AudioPlayer? player;
+    try {
+      if (shouldResumeBgm) {
+        await FlameAudio.bgm.pause();
+      }
+
+      player = await FlameAudio.play(
+        winLevel,
+        volume: defaultWinningSfxVolume,
+      );
+      await player.onPlayerComplete.first.timeout(
+        const Duration(seconds: 8),
+      );
+    } catch (_) {
+      // Keep audio state recoverable even if a platform completion event is lost.
+    } finally {
+      await player?.dispose();
+      _isWinningSfxPlaying = false;
+      if (shouldResumeBgm && _isAppActive && !_isPausedByLifecycle) {
+        await FlameAudio.bgm.resume();
+      }
+    }
   }
 
   static String _comboHitSfxFor(int comboCount) {
