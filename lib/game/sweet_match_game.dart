@@ -41,6 +41,11 @@ class SweetMatchGame extends FlameGame {
   @override
   Color backgroundColor() => const Color(0xfffffcfd);
 
+  Future<int> loadCoinTotal() async {
+    await _loadCoinService();
+    return _coinTotal;
+  }
+
   Future<void> startGame() async {
     if (state == GameState.loading) {
       return;
