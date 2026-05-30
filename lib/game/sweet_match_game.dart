@@ -8,14 +8,17 @@ import '../core/storage/local_storage_service.dart';
 import '../features/economy/data/coin_repository.dart';
 import '../features/economy/domain/coin_service.dart';
 import '../features/economy/domain/game_reward_config.dart';
+import '../features/level/domain/level_progress.dart';
+import '../features/level/domain/level_progress_service.dart';
 import 'board/board_component.dart';
 import 'board/board_controller.dart';
 import 'board/board_position.dart';
-import 'game_config.dart';
 import 'game_snapshot.dart';
 import 'game_state.dart';
+import 'level/generated_level_config.dart';
 import 'level/level_config.dart';
-import 'level/level_loader.dart';
+import 'level/level_generator.dart';
+import 'level/level_templates.dart';
 import 'level/level_objective.dart';
 
 class SweetMatchGame extends FlameGame {
@@ -28,13 +31,16 @@ class SweetMatchGame extends FlameGame {
 
   final ValueNotifier<GameSnapshot> stats =
       ValueNotifier<GameSnapshot>(const GameSnapshot.initial());
-  final LevelLoader _levelLoader = const LevelLoader();
+  final LevelGenerator _levelGenerator =
+      const LevelGenerator(templates: levelTemplates);
 
   GameState state = GameState.mainMenu;
   LevelConfig? _level;
+  GeneratedLevelConfig? _generatedLevel;
   BoardController? controller;
   BoardComponent? boardComponent;
   CoinService? _coinService;
+  LevelProgressService? _levelProgressService;
   int _coinTotal = 0;
   int _coinRewardSequence = 0;
   bool _isWinningTriggered = false;
@@ -47,15 +53,27 @@ class SweetMatchGame extends FlameGame {
     return _coinTotal;
   }
 
+  Future<LevelProgress> loadLevelProgress() async {
+    await _loadLevelProgressService();
+    return _levelProgressService!.getProgress();
+  }
+
   Future<void> startGame() async {
+    await _loadLevelProgressService();
+    await startLevel(_levelProgressService!.currentLevel);
+  }
+
+  Future<void> startLevel(int levelNumber) async {
     if (state == GameState.loading) {
       return;
     }
     state = GameState.loading;
     await _loadCoinService();
+    await _loadLevelProgressService();
     _coinService!.resetLevelSession();
     _isWinningTriggered = false;
-    _level ??= await _levelLoader.load(GameConfig.firstLevelAsset);
+    _generatedLevel = _levelGenerator.generate(levelNumber);
+    _level = LevelConfig.fromGenerated(_generatedLevel!);
     controller = BoardController(_level!);
     boardComponent?.removeFromParent();
     boardComponent = BoardComponent(
@@ -212,8 +230,17 @@ class SweetMatchGame extends FlameGame {
     _coinTotal = _coinService!.currentCoin;
   }
 
+  Future<void> _loadLevelProgressService() async {
+    _levelProgressService ??= LevelProgressService(
+      await LocalStorageService.create(),
+    );
+  }
+
   Future<bool> _rewardLevelCompleted() async {
-    final updatedCoin = await _coinService!.rewardLevelCompleted();
+    await _levelProgressService!.completeLevel(_level!.id);
+    final updatedCoin = await _coinService!.rewardLevelCompleted(
+      amount: _generatedLevel?.rewardCoin ?? GameRewardConfig.winCoinReward,
+    );
     if (updatedCoin == null) {
       return false;
     }

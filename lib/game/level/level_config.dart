@@ -1,4 +1,5 @@
 import '../tile/tile_type.dart';
+import 'generated_level_config.dart';
 import 'level_objective.dart';
 
 class LevelConfig {
@@ -31,7 +32,22 @@ class LevelConfig {
           .cast<String>()
           .map(TileType.fromJson)
           .toList(),
-      objective: LevelObjective.fromJson(json['objective'] as Map<String, dynamic>),
+      objective:
+          LevelObjective.fromJson(json['objective'] as Map<String, dynamic>),
+    );
+  }
+
+  factory LevelConfig.fromGenerated(GeneratedLevelConfig config) {
+    final availableTiles =
+        TileType.values.take(config.tileVariantCount).toList();
+    return LevelConfig(
+      id: config.levelNumber,
+      name: 'Sweet Loop ${config.levelNumber}',
+      rows: config.boardRows,
+      cols: config.boardColumns,
+      moves: config.moves,
+      tileTypes: availableTiles,
+      objective: ScoreObjective(targetScore: config.targetScore),
     );
   }
 }

@@ -9,12 +9,14 @@ class CoinService {
 
   int get currentCoin => _repository.getCoin();
 
-  Future<int?> rewardLevelCompleted() async {
+  Future<int?> rewardLevelCompleted({
+    int amount = GameRewardConfig.winCoinReward,
+  }) async {
     if (_hasRewardClaimed) {
       return null;
     }
     _hasRewardClaimed = true;
-    return _repository.addCoin(GameRewardConfig.winCoinReward);
+    return _repository.addCoin(amount);
   }
 
   void resetLevelSession() {

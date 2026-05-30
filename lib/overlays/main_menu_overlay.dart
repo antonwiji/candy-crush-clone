@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../core/audio/audio_manager.dart';
+import '../features/level/domain/level_progress.dart';
 import '../game/sweet_match_game.dart';
 
 const _primary = Color(0xffa33467);
@@ -25,7 +26,18 @@ class MainMenuOverlay extends StatefulWidget {
 }
 
 class _MainMenuOverlayState extends State<MainMenuOverlay> {
-  late final Future<int> _coinTotal = widget.game.loadCoinTotal();
+  late final Future<_MainMenuData> _menuData = _loadMenuData();
+
+  Future<_MainMenuData> _loadMenuData() async {
+    final results = await Future.wait<Object>([
+      widget.game.loadCoinTotal(),
+      widget.game.loadLevelProgress(),
+    ]);
+    return _MainMenuData(
+      coins: results[0] as int,
+      progress: results[1] as LevelProgress,
+    );
+  }
 
   void _play() {
     unawaited(AudioManager.playClickMenuSfx());
@@ -60,10 +72,12 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<int>(
-      future: _coinTotal,
+    return FutureBuilder<_MainMenuData>(
+      future: _menuData,
       builder: (context, snapshot) {
-        final coins = snapshot.data ?? 0;
+        final data = snapshot.data;
+        final coins = data?.coins ?? 0;
+        final currentLevel = data?.progress.currentLevel ?? 1;
         return Material(
           color: Colors.transparent,
           child: Stack(
@@ -90,7 +104,10 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
                           ),
                         ),
                         SizedBox(height: compact ? 26 : 56),
-                        _LevelPreviewCard(level: 1, width: cardWidth),
+                        _LevelPreviewCard(
+                          level: currentLevel,
+                          width: cardWidth,
+                        ),
                         SizedBox(height: compact ? 28 : 44),
                         _PlayButton(onPressed: _play),
                         SizedBox(height: compact ? 28 : 40),
@@ -117,6 +134,13 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
       },
     );
   }
+}
+
+class _MainMenuData {
+  const _MainMenuData({required this.coins, required this.progress});
+
+  final int coins;
+  final LevelProgress progress;
 }
 
 class _HomeBackground extends StatelessWidget {
