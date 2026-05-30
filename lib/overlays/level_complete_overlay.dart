@@ -396,13 +396,18 @@ class _PrimaryCandyButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
 
+  void _handlePressed() {
+    unawaited(AudioManager.playClickMenuSfx());
+    onPressed();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 54,
       width: double.infinity,
       child: FilledButton(
-        onPressed: onPressed,
+        onPressed: _handlePressed,
         style: FilledButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: const Color(0xffa33467),
@@ -425,12 +430,17 @@ class _SecondaryCandyButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
 
+  void _handlePressed() {
+    unawaited(AudioManager.playClickMenuSfx());
+    onPressed();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 48,
       child: OutlinedButton(
-        onPressed: onPressed,
+        onPressed: _handlePressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
           side: BorderSide(color: Colors.white.withAlpha(190), width: 1.4),

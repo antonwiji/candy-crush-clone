@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../core/audio/audio_manager.dart';
 import '../game/game_config.dart';
 import '../game/game_snapshot.dart';
 import '../game/sweet_match_game.dart';
@@ -82,6 +85,11 @@ class _TopBar extends StatelessWidget {
   final int coinRewardSequence;
   final VoidCallback onPause;
 
+  void _handlePausePressed() {
+    unawaited(AudioManager.playClickMenuSfx());
+    onPause();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -118,7 +126,7 @@ class _TopBar extends StatelessWidget {
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
-            onPressed: onPause,
+            onPressed: _handlePausePressed,
             icon: const Icon(Icons.pause_rounded,
                 color: Color(0xff654d55), size: 25),
           ),
