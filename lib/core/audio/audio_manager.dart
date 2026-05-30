@@ -11,14 +11,17 @@ class AudioManager {
   static const String combo2Hit = 'combo2_hit.mp3';
   static const String combo3Hit = 'combo3_hit.mp3';
   static const String winLevel = 'win_level.mp3';
+  static const String clickMenuSfx = 'click_menu.mp3';
   static const double defaultBgmVolume = 0.35;
   static const double defaultSfxVolume = 0.75;
   static const double defaultComboSfxVolume = 0.8;
   static const double defaultWinningSfxVolume = 0.85;
+  static const double defaultClickMenuSfxVolume = 0.65;
 
   static Future<void>? _initialization;
   static Future<void>? _startingBgm;
   static DateTime? _lastSlideSfxPlayedAt;
+  static DateTime? _lastClickMenuSfxPlayedAt;
   static bool _isBgmPlaying = false;
   static bool _isPausedByLifecycle = false;
   static bool _isAppActive = true;
@@ -38,6 +41,7 @@ class AudioManager {
       combo2Hit,
       combo3Hit,
       winLevel,
+      clickMenuSfx,
     ]);
   }
 
@@ -96,6 +100,20 @@ class AudioManager {
 
     _lastSlideSfxPlayedAt = now;
     unawaited(FlameAudio.play(sfxSlide, volume: defaultSfxVolume));
+  }
+
+  static Future<void> playClickMenuSfx() async {
+    await init();
+
+    final now = DateTime.now();
+    final lastPlayedAt = _lastClickMenuSfxPlayedAt;
+    if (lastPlayedAt != null &&
+        now.difference(lastPlayedAt).inMilliseconds < 100) {
+      return;
+    }
+
+    _lastClickMenuSfxPlayedAt = now;
+    unawaited(FlameAudio.play(clickMenuSfx, volume: defaultClickMenuSfxVolume));
   }
 
   static Future<void> playComboHitSfx(int comboCount) async {
