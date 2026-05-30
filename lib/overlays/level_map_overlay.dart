@@ -5,8 +5,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../core/audio/audio_manager.dart';
+import '../features/level/domain/level_progress.dart';
 import '../features/level/models/level_map_item.dart';
 import '../game/sweet_match_game.dart';
+import '../game/level/level_generator.dart';
+import '../game/level/level_templates.dart';
 
 const _primary = Color(0xffa33467);
 const _primaryHot = Color(0xffb72d75);
@@ -25,38 +28,49 @@ class LevelMapOverlay extends StatefulWidget {
 }
 
 class _LevelMapOverlayState extends State<LevelMapOverlay> {
-  late final Future<int> _coinTotal = widget.game.loadCoinTotal();
+  late final Future<_LevelMapData> _mapData = _loadMapData();
+  final LevelGenerator _levelGenerator =
+      const LevelGenerator(templates: levelTemplates);
 
-  static const List<LevelMapItem> _levels = [
-    LevelMapItem(
-      level: 1,
-      status: LevelStatus.completed,
-      stars: 3,
-      targetScore: 1000,
-    ),
-    LevelMapItem(
-      level: 2,
-      status: LevelStatus.completed,
-      stars: 2,
-      targetScore: 1200,
-    ),
-    LevelMapItem(
-      level: 3,
-      status: LevelStatus.current,
-      targetScore: 1500,
-    ),
-    LevelMapItem(
-      level: 4,
-      status: LevelStatus.unlocked,
-      targetScore: 1800,
-    ),
-    LevelMapItem(level: 5, status: LevelStatus.locked, targetScore: 2100),
-    LevelMapItem(level: 6, status: LevelStatus.locked, targetScore: 2400),
-    LevelMapItem(level: 7, status: LevelStatus.locked, targetScore: 2700),
-    LevelMapItem(level: 8, status: LevelStatus.locked, targetScore: 3000),
-    LevelMapItem(level: 9, status: LevelStatus.locked, targetScore: 3400),
-    LevelMapItem(level: 10, status: LevelStatus.locked, targetScore: 3800),
-  ];
+  Future<_LevelMapData> _loadMapData() async {
+    final results = await Future.wait<Object>([
+      widget.game.loadCoinTotal(),
+      widget.game.loadLevelProgress(),
+    ]);
+    final progress = results[1] as LevelProgress;
+    return _LevelMapData(
+      coins: results[0] as int,
+      levels: _buildLevels(progress),
+    );
+  }
+
+  List<LevelMapItem> _buildLevels(LevelProgress progress) {
+    final visibleCount = math.max(10, progress.unlockedLevel + 6);
+    return List.generate(visibleCount, (index) {
+      final levelNumber = index + 1;
+      final generated = _levelGenerator.generate(levelNumber);
+      final status = _statusFor(levelNumber, progress);
+      return LevelMapItem(
+        level: levelNumber,
+        status: status,
+        stars: levelNumber <= progress.lastCompletedLevel ? 3 : 0,
+        targetScore: generated.targetScore,
+      );
+    });
+  }
+
+  LevelStatus _statusFor(int levelNumber, LevelProgress progress) {
+    if (levelNumber <= progress.lastCompletedLevel) {
+      return LevelStatus.completed;
+    }
+    if (levelNumber == progress.currentLevel) {
+      return LevelStatus.current;
+    }
+    if (levelNumber <= progress.unlockedLevel) {
+      return LevelStatus.unlocked;
+    }
+    return LevelStatus.locked;
+  }
 
   void _openLevel(LevelMapItem level) {
     unawaited(AudioManager.playClickMenuSfx());
@@ -64,7 +78,7 @@ class _LevelMapOverlayState extends State<LevelMapOverlay> {
       _showLockedDialog(level.level);
       return;
     }
-    unawaited(widget.game.startGame());
+    unawaited(widget.game.startLevel(level.level));
   }
 
   void _goHome() {
@@ -95,10 +109,12 @@ class _LevelMapOverlayState extends State<LevelMapOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<int>(
-      future: _coinTotal,
+    return FutureBuilder<_LevelMapData>(
+      future: _mapData,
       builder: (context, snapshot) {
-        final coins = snapshot.data ?? 0;
+        final data = snapshot.data;
+        final coins = data?.coins ?? 0;
+        final levels = data?.levels ?? const <LevelMapItem>[];
         return Material(
           color: Colors.transparent,
           child: Stack(
@@ -118,7 +134,7 @@ class _LevelMapOverlayState extends State<LevelMapOverlay> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           return _LevelPath(
-                            levels: _levels,
+                            levels: levels,
                             width: constraints.maxWidth,
                             onLevelTap: _openLevel,
                           );
@@ -139,6 +155,16 @@ class _LevelMapOverlayState extends State<LevelMapOverlay> {
       },
     );
   }
+}
+
+class _LevelMapData {
+  const _LevelMapData({
+    required this.coins,
+    required this.levels,
+  });
+
+  final int coins;
+  final List<LevelMapItem> levels;
 }
 
 class _MapBackground extends StatelessWidget {

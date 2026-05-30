@@ -30,5 +30,15 @@ void main() {
 
       expect(await service.rewardLevelCompleted(), 10);
     });
+
+    test('can reward a generated level amount', () async {
+      SharedPreferences.setMockInitialValues({});
+      final service = CoinService(
+        CoinRepository(await LocalStorageService.create()),
+      );
+
+      expect(await service.rewardLevelCompleted(amount: 9), 9);
+      expect(service.currentCoin, 9);
+    });
   });
 }
