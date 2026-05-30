@@ -8,6 +8,7 @@ import '../game/sweet_match_game.dart';
 import '../overlays/game_over_overlay.dart';
 import '../overlays/hud_overlay.dart';
 import '../overlays/level_complete_overlay.dart';
+import '../overlays/level_map_overlay.dart';
 import '../overlays/main_menu_overlay.dart';
 import '../overlays/pause_overlay.dart';
 
@@ -45,6 +46,8 @@ class _SweetMatchAppState extends State<SweetMatchApp> {
           overlayBuilderMap: {
             SweetMatchGame.mainMenuOverlay: (_, game) =>
                 MainMenuOverlay(game: game),
+            SweetMatchGame.levelMapOverlay: (_, game) =>
+                LevelMapOverlay(game: game),
             SweetMatchGame.hudOverlay: (_, game) => HudOverlay(game: game),
             SweetMatchGame.pauseOverlay: (_, game) => PauseOverlay(game: game),
             SweetMatchGame.levelCompleteOverlay: (_, game) =>

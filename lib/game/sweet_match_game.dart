@@ -20,6 +20,7 @@ import 'level/level_objective.dart';
 
 class SweetMatchGame extends FlameGame {
   static const String mainMenuOverlay = 'MainMenu';
+  static const String levelMapOverlay = 'LevelMap';
   static const String hudOverlay = 'HUD';
   static const String pauseOverlay = 'Pause';
   static const String levelCompleteOverlay = 'LevelComplete';
@@ -67,6 +68,7 @@ class SweetMatchGame extends FlameGame {
     await camera.viewport.add(boardComponent!);
     overlays
       ..remove(mainMenuOverlay)
+      ..remove(levelMapOverlay)
       ..remove(pauseOverlay)
       ..remove(levelCompleteOverlay)
       ..remove(gameOverOverlay)
@@ -166,10 +168,25 @@ class SweetMatchGame extends FlameGame {
     boardComponent = null;
     overlays
       ..remove(hudOverlay)
+      ..remove(levelMapOverlay)
       ..remove(pauseOverlay)
       ..remove(levelCompleteOverlay)
       ..remove(gameOverOverlay)
       ..add(mainMenuOverlay);
+  }
+
+  void showLevelMap() {
+    resumeEngine();
+    state = GameState.mainMenu;
+    boardComponent?.removeFromParent();
+    boardComponent = null;
+    overlays
+      ..remove(mainMenuOverlay)
+      ..remove(hudOverlay)
+      ..remove(pauseOverlay)
+      ..remove(levelCompleteOverlay)
+      ..remove(gameOverOverlay)
+      ..add(levelMapOverlay);
   }
 
   void _updateStats({String message = ''}) {

@@ -32,6 +32,11 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
     unawaited(widget.game.startGame());
   }
 
+  void _openMap() {
+    unawaited(AudioManager.playClickMenuSfx());
+    widget.game.showLevelMap();
+  }
+
   void _showComingSoon(String title) {
     unawaited(AudioManager.playClickMenuSfx());
     showDialog<void>(
@@ -98,7 +103,7 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
                         _HomeBottomNavigation(
                           onHome: () =>
                               unawaited(AudioManager.playClickMenuSfx()),
-                          onMap: () => _showComingSoon('Level Map'),
+                          onMap: _openMap,
                           onSettings: () => _showComingSoon('Settings'),
                         ),
                       ],
